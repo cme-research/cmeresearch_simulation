@@ -1,0 +1,72 @@
+include "../../robots/ash.inc"
+
+
+name "HouseMap"
+resolution 0.02
+interval_sim 100  # simulation timestep in milliseconds
+
+define floorplan model
+(
+  # color: Tells Player/Stage what colour to render this model, in this case it
+  #is going to be a shade of grey   color Tells Player/Stage what colour to
+  #render this model, in this case it is going to be a shade of grey
+  color "gray30"
+
+  # boundary: Whether or not there is a bounding box around the model. This is
+  # an example of a binary parameter, which means the if the number next to it
+  # is 0 then it is false, if it is 1 or over then it's true. So here we DO have
+  # a bounding box around our "map" model so the robot can't wander out of our
+  # map
+  boundary 1
+
+  gui_nose 0
+  gui_grid 0
+  gui_outline 0
+  gripper_return 0
+  fiducial_return 0
+  laser_return 1
+)
+
+
+
+window
+(
+  # size: This is the size the simulation window will be in pixels. You need to
+  #define both the width and height of the window using the following syntax
+  # [width, height]
+  size [ 1024.0 786.0 ]
+  center [ 25.0 25.0 ]
+  rotate [ 0.0 0.0 ]
+  #scale: This is how many metres of the simulated environment each pixel shows. The
+  #bigger this number is, the smaller the simulation becomes. The optimum value
+  #for the scale is window_size/floorplan_size and it should be rounded downwards
+  #so the simulation is a little smaller than the window it's in, some degree of
+  #trial and error is needed to get this right:
+  # ratio of world to pixel coordinates (window zoom)
+  scale 10
+
+)
+
+floorplan
+(
+  name "house"
+  bitmap "../../maps/house/map.png"
+
+  # size: This is the size in metres of the simulation. All sizes you give in
+  # the world file are in metres, and they represent the actual size of things.
+  # If you have 3m x 4m robot testing arena that is 2m high and you want to
+  # simulate it then the size is [3 4 2]. The first number is the size in the x
+  # dimension, the second is the y dimension and the third is the z dimension.
+  size [ 12.0 10.0 3.0 ]
+  # to have the coordinate system in the lower left corner make it size/2
+  # and use [0,0] in yaml file for map server!
+  pose [ 6.0 5.0 0.0 0.0 ]
+)
+
+# throw in a robot
+ash
+(
+  pose [ 10.0 2.0 0.0 0.0 ]
+  name "Ash"
+  color "orange"
+)

@@ -1,0 +1,44 @@
+define laser_scanners ranger
+(
+  #laser_scanner( pose [ 1.0 0.5 -0.1 0.0 ])
+  #laser_scanner( pose [ -1.0 -0.5 -0.1 180.0 ])
+  laser_scanner( pose [ 0.0 0.0 0.0 0.0 ])
+)
+
+define laser_scanner sensor
+(
+  fov 359.0
+  range [0.1 29.0]
+  samples 640
+  color_rgba [ 1 1 0 0.5 ]
+  size [ 0.102 0.152 0.106 ]
+)
+
+define ash position
+(
+  pose [ 1.463 0.036 0.0 0.0 ]
+
+  odom_error [0.03 0.03 0.00 0.02]
+
+  size [ 0.378 0.328 0.26 ]
+  origin [ 0.0 0.0 0.0 0.0 ]
+  gui_nose 1
+
+  # the base shape of ash
+  block
+  (
+    color "gray"
+    points 4
+    point[0] [0.0 0.0]
+    point[1] [0.378 0.0]
+    point[2] [0.378 0.328]
+    point[3] [0.0 0.328]
+    z [0 0.26]
+  )
+
+  # kinematics
+  drive "diff"
+
+  # spawn sensors
+  laser_scanners()
+)
