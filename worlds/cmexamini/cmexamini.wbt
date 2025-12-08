@@ -1,0 +1,10 @@
+#VRML_SIM R2022a utf8
+WorldInfo { }
+Viewpoint { }
+TexturedBackground { }
+TexturedBackgroundLight { }
+
+# use your proto (angepasster Pfad ggf.)
+EXTERNPROTO "cmexamini.proto" DiffBot
+
+DEF A DiffBot { translation 0 0 0 name "cmexamini" }

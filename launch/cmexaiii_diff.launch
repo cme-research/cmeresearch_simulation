@@ -1,0 +1,32 @@
+from launch import LaunchDescription
+from launch.actions import ExecuteProcess
+from launch_ros.actions import Node
+
+def generate_launch_description():
+    # Dynamically resolve the path to your package
+    pkg_share = get_package_share_directory('cmeresearch_simulation')
+
+    # Build the full path to the world file
+    world_path = os.path.join(pkg_share, 'worlds', 'cmexamini.wbt')
+
+    webots = ExecuteProcess(
+        cmd=['webots', '--world', world_path],
+        output='screen'
+    )
+
+    # 2) Start teleop node
+    teleop = Node(
+        package='diffbot_control',
+        executable='teleop_twist',
+        output='screen'
+    )
+
+    # 3) (if using webots_ros2) start the bridge/driver launch here (example)
+    webots_driver = Node(
+        package='webots_ros2_driver_package_name',  # ersetze mit dem realen package name
+        executable='driver_node_executable',       # ersetze
+        output='screen'
+    )
+
+    return LaunchDescription([ webots, webots_driver, teleop ])
+

@@ -1,0 +1,68 @@
+# Simple differential drive robot for Webots
+PROTO CMEXAMINI [
+  field SFVec3    translation  0 0 0
+  field SFRotation rotation     0 1 0 0
+  field SFString  name         "cmexamini"
+]
+{
+  Robot {
+    translation IS translation
+    rotation IS rotation
+    name IS name
+    controller "ros2"    # Webots controller will be the ROS2 bridge
+    children [
+      # Chassis (box)
+      Solid {
+        translation 0 0.05 0
+        children [
+          Shape {
+            appearance Appearance { material Material { diffuseColor 0.2 0.2 0.8 } }
+            geometry Box { size 0.3 0.1 0.2 }
+          }
+        ]
+      }
+
+      # Left wheel
+      DEF LEFT_WHEEL HingeJoint {
+        jointParameters HingeJointParameters { axis 0 0 1 }
+        device [
+          RotationalMotor { name "left_motor" }
+          PositionSensor { name "left_encoder" }
+        ]
+        solid Solid {
+          children [
+            Shape {
+              geometry Cylinder { radius 0.035 height 0.05 }
+            }
+          ]
+          translation -0.1 -0.03 0
+        }
+      }
+
+      # Right wheel
+      DEF RIGHT_WHEEL HingeJoint {
+        jointParameters HingeJointParameters { axis 0 0 1 }
+        device [
+          RotationalMotor { name "right_motor" }
+          PositionSensor { name "right_encoder" }
+        ]
+        solid Solid {
+          children [
+            Shape {
+              geometry Cylinder { radius 0.035 height 0.05 }
+            }
+          ]
+          translation 0.1 -0.03 0
+        }
+      }
+
+      # Optional: a tag for odometry (could be a GPS or inertial)
+      InertialUnit { name "imu" }
+    ]
+
+    # Physics and mass
+    boundingObject Box { size 0.3 0.1 0.2 }
+    physics Physics { }
+  }
+}
+
