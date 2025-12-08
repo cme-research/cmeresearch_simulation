@@ -161,6 +161,8 @@ include_directories(
 catkin_install_python(PROGRAMS
   scripts/correct_odometry_msg.py
   scripts/correct_odometry_msg
+  scripts/twist_to_twiststamped
+  scripts/twist_to_twiststamped.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
