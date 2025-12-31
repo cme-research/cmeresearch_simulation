@@ -10,9 +10,9 @@ class TwistStampedPublisherImpl:
     def cmd_msg_receiver_cb(self, msg):
         self.twist_stamped_msg.header.stamp = rospy.Time.now()
         self.twist_stamped_msg.header.frame_id = "base_link"
-        self.twist_stamped_msg.linear.x = msg.linear.x
-        self.twist_stamped_msg.linear.y = msg.linear.y
-        self.twist_stamped_msg.angular.z = msg.angular.z
+        self.twist_stamped_msg.twist.linear.x = msg.linear.x
+        self.twist_stamped_msg.twist.linear.y = msg.linear.y
+        self.twist_stamped_msg.twist.angular.z = msg.angular.z
         self.twist_stamped_pub.publish(self.twist_stamped_msg)
 
 class TwistStampedPublisher:
