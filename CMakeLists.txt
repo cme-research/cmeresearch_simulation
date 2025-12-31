@@ -23,13 +23,58 @@ if(BUILD_TESTING)
     ament_lint_auto_find_test_dependencies()
 endif()
 
-## Mark other files for installation (e.g. launch and bag files, etc.)
-install(FILES
- worlds/cmexamini/cmexamini.proto
- worlds/cmexamini/cmexamini.wbt
+install(PROGRAMS
+    scripts/correct_odometry_msg.py
+    scripts/correct_odometry_msg
 
- DESTINATION share/${PROJECT_NAME}/worlds/
+  DESTINATION lib/${PROJECT_NAME}
 )
 
+
+
+## Mark other files for installation (e.g. launch and bag files, etc.)
+install(FILES
+  maps/house/map.pgm
+  maps/house/map.png
+  maps/house/map.yaml
+
+  DESTINATION share/${PROJECT_NAME}/maps/house/
+)
+
+install(FILES
+  maps/laboriii/map.pgm
+  maps/laboriii/map.png
+  maps/laboriii/map.yaml
+
+        DESTINATION share/${PROJECT_NAME}/maps/laboriii/
+)
+
+install(FILES
+  robots/ash.inc
+  robots/cmexa.inc
+  robots/cmexaiii.inc
+
+  DESTINATION share/${PROJECT_NAME}/robots/
+)
+
+install(FILES
+  worlds/ash/house.world
+
+  DESTINATION share/${PROJECT_NAME}/worlds/ash/
+)
+
+install(FILES
+  worlds/cmexa/house.world
+  worlds/cmexa/laboriii.world
+
+  DESTINATION share/${PROJECT_NAME}/worlds/cmexa/
+)
+
+install(FILES
+  worlds/cmexaiii/house.world
+  worlds/cmexaiii/laboriii.world
+
+  DESTINATION share/${PROJECT_NAME}/worlds/cmexaiii/
+)
 
 ament_package()

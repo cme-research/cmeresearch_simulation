@@ -3,9 +3,8 @@
 <package format="3">
   <name>cmeresearch_simulation</name>
   <version>0.1.0</version>
-  <description>This package contains URDF/Xacro descriptions for various robots developed by CME Robotics.
-    It provides 3D models, physical properties, and controller configurations for simulation and visualization
-    in ROS environments.
+  <description>This ROS package provides simulation environments for CME Robotics
+    research robots using the Stage simulator.
   </description>
   <maintainer email="info@cme-robotics.com">cmerobotics</maintainer>
   <license>GPLv3</license>
@@ -14,9 +13,7 @@
   <buildtool_depend>rosidl_default_generators</buildtool_depend>
 
   <exec_depend>rosidl_default_runtime</exec_depend>
-  <depend>xacro</depend>
-    <!-- according to google there is no rosdep definition for webots as a dependency -->
-  <!-- <depend>webots_ros</depend> -->
+
 
   <member_of_group>rosidl_interface_packages</member_of_group>
 
