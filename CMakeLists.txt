@@ -71,10 +71,23 @@ install(FILES
 )
 
 install(FILES
-  worlds/cmexaiii/house.world
   worlds/cmexaiii/laboriii.world
 
   DESTINATION share/${PROJECT_NAME}/worlds/cmexaiii/
 )
 
+install(FILES
+  worlds/cmexamini/cmexamini.proto
+  worlds/cmexamini/cmexamini.wbt
+  worlds/cmexamini/cmexamini2.wbt
+  worlds/cmexamini/turtlebot3_burger_example.wbt
+
+  DESTINATION share/${PROJECT_NAME}/worlds/cmexaiii/
+)
+
+install(FILES
+  launch/cmexaiii_diff.launch
+
+  DESTINATION share/${PROJECT_NAME}/launch/
+)
 ament_package()
