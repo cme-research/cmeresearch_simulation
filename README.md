@@ -136,6 +136,39 @@ WebotsController (cmexaiii)  ─────────────────
 
 ---
 
+### Full simulation stack (`cmexaiii_webots_full.launch.py`)
+
+Adds SLAM, navigation, and the robot state machine on top of the base simulation:
+
+```bash
+ros2 launch cmeresearch_simulation cmexaiii_webots_full.launch.py
+```
+
+**Start sequence and timing**
+
+```
+t = 0 s   Webots + robot_state_publisher + ros2_control (base sim)
+t = 6 s   dual_laser_merger  /scan_front_left + /scan_rear_right → /scan_combined
+t = 6 s   twist_mux          /cmd_vel → /base_mecanum_controller/cmd_vel
+t = 6 s   state machine      sm_robot, nav_status, system_stats
+t = 12 s  SLAM Toolbox        online async mapping on /scan_combined
+t = 12 s  Nav2 bringup        planner + controller + recovery behaviours
+```
+
+**Additional topics (full stack)**
+
+| Topic | Type | Description |
+|---|---|---|
+| `/scan_combined` | `sensor_msgs/LaserScan` | Merged 360° scan from both LiDARs |
+| `/cmd_vel` | `geometry_msgs/Twist` | Nav2 velocity output (goes into twist_mux) |
+| `/teleop/cmd_vel` | `geometry_msgs/Twist` | Manual teleop input (highest priority) |
+| `/map` | `nav_msgs/OccupancyGrid` | SLAM live map |
+| `/robot_state` | `cmeresearch_msgs/RobotState` | State machine output |
+| `/nav_status` | `std_msgs/String` | Navigation goal status |
+| `/system_stats` | `std_msgs/String` | CPU / memory / temperature (JSON) |
+
+---
+
 ### Sending commands manually
 
 ```bash
@@ -210,6 +243,82 @@ ros2 launch cmeresearch_bringup cmexaiii_nav_mapping.launch.py use_sim_time:=tru
 # State machine
 ros2 launch cmeresearch_robot_state sm_robot.launch.py use_sim_time:=true
 ```
+
+---
+
+---
+
+## Docker
+
+A self-contained image that bundles Webots R2025a, ROS 2 Jazzy, and all
+simulation packages. Useful for CI, clean-room testing, or running the sim
+on a machine without a local ROS install.
+
+### Build
+
+Run from the **workspace root** (`ros2_ws/`), not from inside the package:
+
+```bash
+docker build \
+  -f src/cmeresearch_simulation/docker/Dockerfile \
+  -t cmeresearch/simulation:latest \
+  .
+```
+
+The build:
+1. Starts from `ros:jazzy-ros-base`
+2. Installs Webots R2025a via the Cyberbotics apt repository
+3. Installs all ROS 2 apt dependencies (nav2, slam\_toolbox, webots\_ros2, etc.)
+4. Clones the other cme-research source packages via `docker/simulation.repos`
+5. Runs `rosdep install` and `colcon build`
+
+> **GitHub authentication**: the repos file uses HTTPS URLs so no SSH key is
+> needed inside the build context.  If any repo is private, pass a `GITHUB_TOKEN`
+> build-arg and adjust the clone step accordingly.
+
+### Run – with display (X11 forwarding)
+
+```bash
+# Allow the container to use the host X server
+xhost +local:docker
+
+docker run -it --rm \
+  -e DISPLAY=$DISPLAY \
+  -v /tmp/.X11-unix:/tmp/.X11-unix \
+  cmeresearch/simulation:latest
+```
+
+This starts the full stack (`cmexaiii_webots_full.launch.py`) with the Webots
+GUI visible on your desktop.
+
+### Run – headless (no display)
+
+The entrypoint automatically starts **Xvfb** (virtual framebuffer) when
+`DISPLAY` is not set, so Webots can initialise without a physical monitor:
+
+```bash
+docker run -it --rm \
+  cmeresearch/simulation:latest \
+  ros2 launch cmeresearch_simulation cmexaiii_webots_full.launch.py gui:=false
+```
+
+### Run – base simulation only
+
+```bash
+docker run -it --rm \
+  -e DISPLAY=$DISPLAY \
+  -v /tmp/.X11-unix:/tmp/.X11-unix \
+  cmeresearch/simulation:latest \
+  ros2 launch cmeresearch_simulation cmexaiii_webots.launch.py
+```
+
+### Useful flags
+
+| Flag | Purpose |
+|---|---|
+| `--network host` | Share the host network (needed if connecting RViz from the host) |
+| `-v $(pwd)/maps:/maps` | Mount a host directory to save SLAM maps |
+| `-e RMW_IMPLEMENTATION=rmw_cyclonedds_cpp` | Switch DDS middleware |
 
 ---
 

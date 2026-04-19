@@ -1,0 +1,25 @@
+repositories:
+  src/cmeresearch_msgs:
+    type: git
+    url: https://github.com/cme-research/cmeresearch_msgs.git
+    version: main
+
+  src/cmeresearch_description:
+    type: git
+    url: https://github.com/cme-research/cmeresearch_description.git
+    version: main
+
+  src/cmeresearch_bringup:
+    type: git
+    url: https://github.com/cme-research/cmeresearch_bringup.git
+    version: main
+
+  src/cmeresearch_robot_state:
+    type: git
+    url: https://github.com/cme-research/cmeresearch_robot_state.git
+    version: jazzy_dev
+
+  src/dual_laser_merger:
+    type: git
+    url: https://github.com/cme-research/dual_laser_merger.git
+    version: jazzy_dev

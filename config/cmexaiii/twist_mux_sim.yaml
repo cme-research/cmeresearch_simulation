@@ -1,0 +1,14 @@
+twist_mux:
+  ros__parameters:
+    # Velocity arbitration for simulation.
+    # Output is remapped to /base_mecanum_controller/cmd_vel in the launch file.
+    use_stamped: false
+    topics:
+      navigation:
+        topic:    /cmd_vel
+        timeout:  0.5
+        priority: 10
+      teleop:
+        topic:    /teleop/cmd_vel
+        timeout:  0.5
+        priority: 100
