@@ -1,0 +1,77 @@
+# CMEXAIII Webots Simulation – Docker Compose
+#
+# Build the image first (from ros2_ws/ root):
+#   docker build -f src/cmeresearch_simulation/docker/Dockerfile \
+#                -t cmeresearch/simulation:latest .
+#
+# Profiles
+# --------
+#   base          Webots + robot driver + ros2_control only
+#   full          base + SLAM + Nav2 + state machine (default)
+#   rviz          adds an RViz2 window (requires display)
+#
+# Quick start (full stack, with GUI):
+#   xhost +local:docker
+#   docker compose -f src/cmeresearch_simulation/docker/docker-compose.yml \
+#     --profile full up
+#
+# Headless (no display – Xvfb auto-started inside containers):
+#   docker compose -f src/cmeresearch_simulation/docker/docker-compose.yml \
+#     --profile full up
+#
+# Base sim only:
+#   docker compose ... --profile base up
+#
+# With RViz:
+#   xhost +local:docker
+#   docker compose ... --profile full --profile rviz up
+
+x-ros-common: &ros-common
+  image: cmeresearch/simulation:latest
+  network_mode: host          # ROS 2 DDS discovery works across containers
+  ipc: host                   # shared memory transport (FastDDS / CycloneDDS)
+  environment:
+    - DISPLAY=${DISPLAY:-}    # empty → entrypoint starts Xvfb automatically
+    - ROS_DOMAIN_ID=${ROS_DOMAIN_ID:-0}
+    - RMW_IMPLEMENTATION=${RMW_IMPLEMENTATION:-rmw_fastrtps_cpp}
+  volumes:
+    - /tmp/.X11-unix:/tmp/.X11-unix   # no-op if DISPLAY is unset
+
+services:
+
+  # ── Base simulation (Webots + ros2_control) ──────────────────────────────
+  webots_sim:
+    <<: *ros-common
+    profiles: [base, full]
+    container_name: cmexaiii_webots
+    command: >
+      ros2 launch cmeresearch_simulation cmexaiii_webots.launch.py
+        gui:=${WEBOTS_GUI:-true}
+        use_sim_time:=true
+    restart: on-failure
+
+  # ── Navigation stack (laser merger + twist_mux + SLAM + Nav2 + state machine)
+  nav_stack:
+    <<: *ros-common
+    profiles: [full]
+    container_name: cmexaiii_nav_stack
+    # startup_delay gives Webots time to publish TF and laser topics before
+    # the nav stack tries to subscribe.
+    command: >
+      ros2 launch cmeresearch_simulation cmexaiii_nav_stack.launch.py
+        startup_delay:=${NAV_STARTUP_DELAY:-10.0}
+    depends_on:
+      - webots_sim
+    restart: on-failure
+
+  # ── Optional RViz2 ────────────────────────────────────────────────────────
+  rviz:
+    <<: *ros-common
+    profiles: [rviz]
+    container_name: cmexaiii_rviz
+    command: >
+      ros2 run rviz2 rviz2
+        -d /ros2_ws/install/cmeresearch_bringup/share/cmeresearch_bringup/rviz/cmexaiii.rviz
+    depends_on:
+      - webots_sim
+    restart: on-failure

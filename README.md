@@ -322,6 +322,53 @@ docker run -it --rm \
 
 ---
 
+### Docker Compose
+
+`docker/docker-compose.yml` splits the simulation into two services that
+communicate over the host network via ROS 2 DDS:
+
+| Service | Profile | What it runs |
+|---|---|---|
+| `webots_sim` | `base`, `full` | Webots + robot driver + ros2\_control |
+| `nav_stack` | `full` | laser merger + twist\_mux + SLAM + Nav2 + state machine |
+| `rviz` | `rviz` | RViz2 window (combine with any other profile) |
+
+**Full stack with GUI** (run from `ros2_ws/`):
+
+```bash
+xhost +local:docker
+docker compose -f src/cmeresearch_simulation/docker/docker-compose.yml \
+  --profile full up
+```
+
+**Headless** (Xvfb starts automatically inside each container):
+
+```bash
+WEBOTS_GUI=false \
+docker compose -f src/cmeresearch_simulation/docker/docker-compose.yml \
+  --profile full up
+```
+
+**Base simulation only** (no SLAM / Nav2):
+
+```bash
+xhost +local:docker
+docker compose -f src/cmeresearch_simulation/docker/docker-compose.yml \
+  --profile base up
+```
+
+**Environment variables** (set before `docker compose up`):
+
+| Variable | Default | Description |
+|---|---|---|
+| `DISPLAY` | _(unset)_ | X11 display; unset → Xvfb |
+| `WEBOTS_GUI` | `true` | Set `false` for headless Webots |
+| `NAV_STARTUP_DELAY` | `10.0` | Extra seconds nav\_stack waits for Webots |
+| `ROS_DOMAIN_ID` | `0` | ROS 2 domain (must match on host if connecting) |
+| `RMW_IMPLEMENTATION` | `rmw_fastrtps_cpp` | DDS middleware |
+
+---
+
 ## Stage Simulation (legacy, ROS 1)
 
 The Stage worlds under `worlds/cmexa/`, `worlds/cmexaiii/`, and `worlds/ash/`
