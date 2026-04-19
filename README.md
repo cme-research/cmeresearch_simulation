@@ -127,7 +127,8 @@ WebotsController (cmexaiii)  ─────────────────
 
 | Topic | Type | Description |
 |---|---|---|
-| `/base_mecanum_controller/cmd_vel` | `geometry_msgs/Twist` | Velocity command input (identical to hardware) |
+| `/base_mecanum_controller/reference` | `geometry_msgs/TwistStamped` | Velocity command input (Jazzy uses TwistStamped) |
+| `/base_mecanum_controller/cmd_vel` | `geometry_msgs/Twist` | Legacy Twist alias (also accepted) |
 | `/base_mecanum_controller/odom` | `nav_msgs/Odometry` | Odometry from wheel encoders |
 | `/scan_front_left` | `sensor_msgs/LaserScan` | Front-left LiDAR (360°, 8 m range) |
 | `/scan_rear_right` | `sensor_msgs/LaserScan` | Rear-right LiDAR (360°, 8 m range) |
@@ -171,18 +172,23 @@ t = 12 s  Nav2 bringup        planner + controller + recovery behaviours
 
 ### Sending commands manually
 
+In ROS 2 Jazzy the `mecanum_drive_controller` uses **`TwistStamped`** on the
+`/reference` topic by default:
+
 ```bash
 # Move forward at 0.3 m/s
-ros2 topic pub --once /base_mecanum_controller/cmd_vel \
-  geometry_msgs/msg/Twist "{linear: {x: 0.3, y: 0.0, z: 0.0}, angular: {z: 0.0}}"
+ros2 topic pub --once /base_mecanum_controller/reference \
+  geometry_msgs/msg/TwistStamped \
+  "{header: {frame_id: ''}, twist: {linear: {x: 0.3}}}"
 
 # Rotate in place
-ros2 topic pub --once /base_mecanum_controller/cmd_vel \
-  geometry_msgs/msg/Twist "{linear: {x: 0.0}, angular: {z: 0.5}}"
+ros2 topic pub --once /base_mecanum_controller/reference \
+  geometry_msgs/msg/TwistStamped \
+  "{header: {frame_id: ''}, twist: {angular: {z: 0.5}}}"
 
 # Stop
-ros2 topic pub --once /base_mecanum_controller/cmd_vel \
-  geometry_msgs/msg/Twist "{}"
+ros2 topic pub --once /base_mecanum_controller/reference \
+  geometry_msgs/msg/TwistStamped "{}"
 ```
 
 ---
