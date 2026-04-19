@@ -1,0 +1,488 @@
+#VRML_SIM R2025a utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackground.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/floors/protos/Floor.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/Parquet.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/apartment_structure/protos/Wall.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/apartment_structure/protos/Door.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/Roughcast.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/tables/protos/Table.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/factory/containers/protos/CardboardBox.proto"
+
+# Indoor office / lab environment for CMEXAIII mecanum robot Webots simulation.
+# Layout: two connected rooms (12 x 6 m each) with a 1.5 m door opening,
+# scattered box obstacles, and tables along the walls.
+#
+# Coordinate system (Webots NUE):  X = East / right,  Y = up,  Z = South / backward
+# Robot faces  -Z  (north) by default.
+#
+# Room A (left):  X ∈ [-7, 0],  Z ∈ [-6, 6]
+# Room B (right): X ∈ [ 0, 7],  Z ∈ [-6, 6]
+# Doorway: on dividing wall at X = 0, Z ∈ [-0.75, 0.75]
+
+WorldInfo {
+  title "CMEXAIII Indoor Office"
+  info [
+    "Webots R2025a simulation for CME Research CMEXAIII mecanum robot"
+    "Two-room office layout, 14 x 12 m total area"
+    "Uses webots_ros2_control and mecanum_drive_controller"
+  ]
+  basicTimeStep 32
+  coordinateSystem "NUE"
+}
+
+Viewpoint {
+  fieldOfView 1.0472
+  orientation -0.4082 -0.8165 -0.4082 1.9106
+  position 0 14 7
+  follow "cmexaiii"
+}
+
+TexturedBackground {
+  texture "empty_office"
+  skybox FALSE
+}
+
+TexturedBackgroundLight {
+}
+
+# ── Floor ─────────────────────────────────────────────────────────────────────
+Floor {
+  translation 0 0 0
+  size 14 12
+  tileSize 1 1
+  appearance Parquet {
+    textureTransform TextureTransform {
+      scale 0.5 0.5
+    }
+  }
+}
+
+# ── Outer walls ───────────────────────────────────────────────────────────────
+# North wall  (z = -6)
+Wall {
+  translation 0 0 -6
+  rotation 0 1 0 3.14159
+  name "north_wall"
+  size 14 2.5 0.2
+  appearance Roughcast {
+    textureTransform TextureTransform {
+      scale 10 2.5
+    }
+  }
+}
+
+# South wall  (z = +6)
+Wall {
+  translation 0 0 6
+  name "south_wall"
+  size 14 2.5 0.2
+  appearance Roughcast {
+    textureTransform TextureTransform {
+      scale 10 2.5
+    }
+  }
+}
+
+# West wall  (x = -7)
+Wall {
+  translation -7 0 0
+  rotation 0 1 0 1.5708
+  name "west_wall"
+  size 12 2.5 0.2
+  appearance Roughcast {
+    textureTransform TextureTransform {
+      scale 8 2.5
+    }
+  }
+}
+
+# East wall  (x = +7)
+Wall {
+  translation 7 0 0
+  rotation 0 1 0 -1.5708
+  name "east_wall"
+  size 12 2.5 0.2
+  appearance Roughcast {
+    textureTransform TextureTransform {
+      scale 8 2.5
+    }
+  }
+}
+
+# ── Internal dividing wall with door opening ──────────────────────────────────
+# Segment north of door  (z ∈ [-6, -0.75])
+Wall {
+  translation 0 0 -3.375
+  rotation 0 1 0 1.5708
+  name "divider_north"
+  size 5.25 2.5 0.2
+  appearance Roughcast {
+    textureTransform TextureTransform {
+      scale 4 2.5
+    }
+  }
+}
+
+# Door frame / opening at z ∈ [-0.75, +0.75]  (1.5 m wide)
+Door {
+  translation 0 0 0
+  rotation 0 1 0 1.5708
+  name "door_AB"
+  size 0.2 2.5 1.5
+  frameSize 0.05 0.05 0.05
+}
+
+# Segment south of door  (z ∈ [+0.75, +6])
+Wall {
+  translation 0 0 3.375
+  rotation 0 1 0 1.5708
+  name "divider_south"
+  size 5.25 2.5 0.2
+  appearance Roughcast {
+    textureTransform TextureTransform {
+      scale 4 2.5
+    }
+  }
+}
+
+# ── Obstacles – Room A (left, X < 0) ─────────────────────────────────────────
+CardboardBox {
+  translation -5 0 -3
+  name "box_A1"
+  size 0.5 1.0 0.5
+}
+
+CardboardBox {
+  translation -3 0 2
+  name "box_A2"
+  size 0.6 0.8 0.4
+}
+
+CardboardBox {
+  translation -5.5 0 1
+  name "box_A3"
+  size 0.4 0.6 0.6
+}
+
+Table {
+  translation -5.5 0 -5
+  name "table_A1"
+  size 1.8 0.74 0.9
+}
+
+Table {
+  translation -1.5 0 -5
+  name "table_A2"
+  size 1.8 0.74 0.9
+}
+
+# ── Obstacles – Room B (right, X > 0) ────────────────────────────────────────
+CardboardBox {
+  translation 4 0 -4
+  name "box_B1"
+  size 0.5 1.0 0.5
+}
+
+CardboardBox {
+  translation 2.5 0 1.5
+  name "box_B2"
+  size 0.6 1.2 0.6
+}
+
+CardboardBox {
+  translation 5.5 0 3
+  name "box_B3"
+  size 0.4 0.8 0.4
+}
+
+Table {
+  translation 5.5 0 -5
+  name "table_B1"
+  size 1.8 0.74 0.9
+}
+
+Table {
+  translation 5.5 0 4.5
+  rotation 0 1 0 1.5708
+  name "table_B2"
+  size 1.8 0.74 0.9
+}
+
+# ── CMEXAIII Robot ────────────────────────────────────────────────────────────
+# Robot is spawned in Room A, facing north (-Z direction).
+# Translation Y = wheel_radius (0.05 m) so wheels sit on the floor.
+#
+# Webots frame mapping to ROS frame (handled by webots_ros2_driver):
+#   Webots -Z  ↔  ROS +X  (forward)
+#   Webots -X  ↔  ROS +Y  (left)
+#   Webots +Y  ↔  ROS +Z  (up)
+#
+# Wheel positions (Webots frame, relative to robot origin):
+#   front_left  : X = -track/2 = -0.177,  Y = 0,  Z = -wheelbase/2 = -0.150
+#   front_right : X = +track/2 = +0.177,  Y = 0,  Z = -wheelbase/2 = -0.150
+#   rear_left   : X = -track/2 = -0.177,  Y = 0,  Z = +wheelbase/2 = +0.150
+#   rear_right  : X = +track/2 = +0.177,  Y = 0,  Z = +wheelbase/2 = +0.150
+#
+# All wheels: HingeJoint axis = (1, 0, 0); positive velocity → forward (-Z) motion.
+# RotationalMotor names match URDF joint names consumed by mecanum_drive_controller.
+
+DEF CMEXAIII Robot {
+  translation -4 0.05 -2
+  rotation 0 1 0 0
+  name "cmexaiii"
+  model "CMEXAIII"
+  description "CME Research CMEXAIII mecanum drive robot"
+  controller "<extern>"
+  synchronization FALSE
+
+  children [
+
+    # ── Chassis body ──────────────────────────────────────────────────────────
+    # Visual only; bounding object on the Robot node covers the chassis.
+    DEF CHASSIS Solid {
+      translation 0 0.525 0
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.22 0.22 0.28
+            roughness 0.6
+            metalness 0.35
+          }
+          geometry Box {
+            size 0.55 1.0 1.1
+          }
+        }
+      ]
+      name "chassis"
+    }
+
+    # ── Front-Left Wheel ──────────────────────────────────────────────────────
+    HingeJoint {
+      jointParameters HingeJointParameters {
+        axis 1 0 0
+        anchor -0.177 0 -0.150
+      }
+      device [
+        RotationalMotor {
+          name "front_left_wheel_joint"
+          maxVelocity 15
+          maxTorque 100
+          soundVolume 0
+        }
+        PositionSensor {
+          name "front_left_wheel_joint_sensor"
+          period 0.032
+        }
+      ]
+      endPoint DEF WHEEL_FL Solid {
+        translation -0.177 0 -0.150
+        rotation 0 0 1 1.5707963
+        name "front_left_wheel"
+        children [
+          Shape {
+            appearance PBRAppearance {
+              baseColor 0.08 0.08 0.08
+              roughness 0.95
+            }
+            geometry Cylinder {
+              radius 0.05
+              height 0.05
+            }
+          }
+        ]
+        boundingObject Cylinder {
+          radius 0.05
+          height 0.05
+        }
+        physics Physics {
+          density -1
+          mass 0.3
+        }
+      }
+    }
+
+    # ── Front-Right Wheel ─────────────────────────────────────────────────────
+    HingeJoint {
+      jointParameters HingeJointParameters {
+        axis 1 0 0
+        anchor 0.177 0 -0.150
+      }
+      device [
+        RotationalMotor {
+          name "front_right_wheel_joint"
+          maxVelocity 15
+          maxTorque 100
+          soundVolume 0
+        }
+        PositionSensor {
+          name "front_right_wheel_joint_sensor"
+          period 0.032
+        }
+      ]
+      endPoint DEF WHEEL_FR Solid {
+        translation 0.177 0 -0.150
+        rotation 0 0 1 1.5707963
+        name "front_right_wheel"
+        children [
+          Shape {
+            appearance PBRAppearance {
+              baseColor 0.08 0.08 0.08
+              roughness 0.95
+            }
+            geometry Cylinder {
+              radius 0.05
+              height 0.05
+            }
+          }
+        ]
+        boundingObject Cylinder {
+          radius 0.05
+          height 0.05
+        }
+        physics Physics {
+          density -1
+          mass 0.3
+        }
+      }
+    }
+
+    # ── Rear-Left Wheel ───────────────────────────────────────────────────────
+    HingeJoint {
+      jointParameters HingeJointParameters {
+        axis 1 0 0
+        anchor -0.177 0 0.150
+      }
+      device [
+        RotationalMotor {
+          name "rear_left_wheel_joint"
+          maxVelocity 15
+          maxTorque 100
+          soundVolume 0
+        }
+        PositionSensor {
+          name "rear_left_wheel_joint_sensor"
+          period 0.032
+        }
+      ]
+      endPoint DEF WHEEL_RL Solid {
+        translation -0.177 0 0.150
+        rotation 0 0 1 1.5707963
+        name "rear_left_wheel"
+        children [
+          Shape {
+            appearance PBRAppearance {
+              baseColor 0.08 0.08 0.08
+              roughness 0.95
+            }
+            geometry Cylinder {
+              radius 0.05
+              height 0.05
+            }
+          }
+        ]
+        boundingObject Cylinder {
+          radius 0.05
+          height 0.05
+        }
+        physics Physics {
+          density -1
+          mass 0.3
+        }
+      }
+    }
+
+    # ── Rear-Right Wheel ──────────────────────────────────────────────────────
+    HingeJoint {
+      jointParameters HingeJointParameters {
+        axis 1 0 0
+        anchor 0.177 0 0.150
+      }
+      device [
+        RotationalMotor {
+          name "rear_right_wheel_joint"
+          maxVelocity 15
+          maxTorque 100
+          soundVolume 0
+        }
+        PositionSensor {
+          name "rear_right_wheel_joint_sensor"
+          period 0.032
+        }
+      ]
+      endPoint DEF WHEEL_RR Solid {
+        translation 0.177 0 0.150
+        rotation 0 0 1 1.5707963
+        name "rear_right_wheel"
+        children [
+          Shape {
+            appearance PBRAppearance {
+              baseColor 0.08 0.08 0.08
+              roughness 0.95
+            }
+            geometry Cylinder {
+              radius 0.05
+              height 0.05
+            }
+          }
+        ]
+        boundingObject Cylinder {
+          radius 0.05
+          height 0.05
+        }
+        physics Physics {
+          density -1
+          mass 0.3
+        }
+      }
+    }
+
+    # ── Front-Left LiDAR ──────────────────────────────────────────────────────
+    # URDF position (ROS): (0.460, 0.257, 0.18) → Webots (-0.257, 0.18, -0.460)
+    # Topic: /scan_front_left  Frame: base_laser_front_left
+    Lidar {
+      translation -0.257 0.18 -0.460
+      rotation 0 1 0 -0.785
+      name "scan_front_left"
+      horizontalResolution 720
+      fieldOfView 6.2832
+      numberOfLayers 1
+      near 0.05
+      maxRange 8.0
+      noise 0.01
+    }
+
+    # ── Rear-Right LiDAR ──────────────────────────────────────────────────────
+    # URDF position (ROS): (-0.460, -0.257, 0.18) → Webots (0.257, 0.18, 0.460)
+    # Topic: /scan_rear_right  Frame: base_laser_rear_right
+    Lidar {
+      translation 0.257 0.18 0.460
+      rotation 0 1 0 2.356
+      name "scan_rear_right"
+      horizontalResolution 720
+      fieldOfView 6.2832
+      numberOfLayers 1
+      near 0.05
+      maxRange 8.0
+      noise 0.01
+    }
+
+  ]
+
+  # Chassis bounding object (covers body; wheels have their own)
+  boundingObject Pose {
+    translation 0 0.525 0
+    children [
+      Box {
+        size 0.55 1.0 1.1
+      }
+    ]
+  }
+
+  physics Physics {
+    density -1
+    mass 17.7
+    centerOfMass [ 0 0.5 0 ]
+  }
+}
