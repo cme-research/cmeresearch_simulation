@@ -1,0 +1,18 @@
+mqtt_bridge_node:
+  ros__parameters:
+    mqtt:
+      client:
+        protocol: 4      # MQTTv311
+      connection:
+        host: "localhost"
+        port: 1883
+        keepalive: 60
+      private_path: "cmeresearch/cmexa-001"
+    serializer: json:dumps
+    deserializer: json:loads
+    n_bridges: 1
+    bridge:
+      # Webapp publishes JSON-encoded TwistStamped to
+      #   cmeresearch/cmexa-001/mqtt/cmd_vel
+      # Bridge re-publishes it on ROS topic /mqtt/cmd_vel for twist_mux.
+      bridge1: ["mqtt_bridge.bridge:MqttToRosBridge","geometry_msgs.msg:TwistStamped","~/mqtt/cmd_vel","/mqtt/cmd_vel"]

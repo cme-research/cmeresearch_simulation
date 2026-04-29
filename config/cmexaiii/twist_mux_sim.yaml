@@ -1,8 +1,9 @@
 twist_mux:
   ros__parameters:
     # Velocity arbitration for simulation.
-    # Output is remapped to /base_mecanum_controller/cmd_vel in the launch file.
-    use_stamped: false
+    # Output is remapped to /base_mecanum_controller/reference in the launch file.
+    # MecanumDriveController in ros2_control jazzy expects TwistStamped on /reference.
+    use_stamped: true
     topics:
       navigation:
         topic:    /cmd_vel
@@ -12,3 +13,7 @@ twist_mux:
         topic:    /teleop/cmd_vel
         timeout:  0.5
         priority: 100
+      mqtt:
+        topic:    /mqtt/cmd_vel
+        timeout:  0.5
+        priority: 80

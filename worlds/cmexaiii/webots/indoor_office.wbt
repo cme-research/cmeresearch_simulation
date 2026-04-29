@@ -1,25 +1,18 @@
 #VRML_SIM R2025a utf8
 
-EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackground.proto"
-EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
-EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/floors/protos/Floor.proto"
-EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/Parquet.proto"
-EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/apartment_structure/protos/Wall.proto"
-EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/apartment_structure/protos/Door.proto"
-EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/Roughcast.proto"
-EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/tables/protos/Table.proto"
-EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/factory/containers/protos/CardboardBox.proto"
-
 # Indoor office / lab environment for CMEXAIII mecanum robot Webots simulation.
-# Layout: two connected rooms (12 x 6 m each) with a 1.5 m door opening,
+# Self-contained: uses only built-in Webots nodes, no EXTERNPROTOs, so the
+# world loads instantly without any download or local PROTO installation.
+#
+# Layout: two connected rooms (7 x 12 m each) with a 1.5 m door opening,
 # scattered box obstacles, and tables along the walls.
 #
 # Coordinate system (Webots NUE):  X = East / right,  Y = up,  Z = South / backward
 # Robot faces  -Z  (north) by default.
 #
-# Room A (left):  X ∈ [-7, 0],  Z ∈ [-6, 6]
-# Room B (right): X ∈ [ 0, 7],  Z ∈ [-6, 6]
-# Doorway: on dividing wall at X = 0, Z ∈ [-0.75, 0.75]
+# Room A (left):  X in [-7, 0],  Z in [-6, 6]
+# Room B (right): X in [ 0, 7],  Z in [-6, 6]
+# Doorway: on dividing wall at X = 0, Z in [-0.75, 0.75]
 
 WorldInfo {
   title "CMEXAIII Indoor Office"
@@ -33,181 +26,401 @@ WorldInfo {
 }
 
 Viewpoint {
-  fieldOfView 1.0472
-  orientation -0.4082 -0.8165 -0.4082 1.9106
-  position 0 14 7
-  follow "cmexaiii"
+  fieldOfView 0.9
+  orientation -0.326 -0.318 -0.89 1.61
+  position -1.6 18.5 -13.3
 }
 
-TexturedBackground {
-  texture "empty_office"
-  skybox FALSE
+Background {
+  skyColor [
+    0.55 0.65 0.78
+  ]
 }
 
-TexturedBackgroundLight {
+DirectionalLight {
+  ambientIntensity 0.5
+  direction -0.4 -1 -0.3
+  intensity 0.9
+  castShadows TRUE
+}
+
+DirectionalLight {
+  ambientIntensity 0.3
+  direction 0.5 -0.5 0.4
+  intensity 0.4
 }
 
 # ── Floor ─────────────────────────────────────────────────────────────────────
-Floor {
-  translation 0 0 0
-  size 14 12
-  tileSize 1 1
-  appearance Parquet {
-    textureTransform TextureTransform {
-      scale 0.5 0.5
+DEF FLOOR Solid {
+  translation 0 -0.025 0
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.78 0.65 0.45
+        roughness 0.9
+        metalness 0.0
+      }
+      geometry Box {
+        size 14 0.05 12
+      }
     }
+  ]
+  name "floor"
+  boundingObject Box {
+    size 14 0.05 12
   }
 }
 
 # ── Outer walls ───────────────────────────────────────────────────────────────
 # North wall  (z = -6)
-Wall {
-  translation 0 0 -6
-  rotation 0 1 0 3.14159
-  name "north_wall"
-  size 14 2.5 0.2
-  appearance Roughcast {
-    textureTransform TextureTransform {
-      scale 10 2.5
+DEF NORTH_WALL Solid {
+  translation 0 1.25 -6
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.92 0.90 0.85
+        roughness 1.0
+        metalness 0.0
+      }
+      geometry Box {
+        size 14 2.5 0.2
+      }
     }
+  ]
+  name "north_wall"
+  boundingObject Box {
+    size 14 2.5 0.2
   }
 }
 
 # South wall  (z = +6)
-Wall {
-  translation 0 0 6
-  name "south_wall"
-  size 14 2.5 0.2
-  appearance Roughcast {
-    textureTransform TextureTransform {
-      scale 10 2.5
+DEF SOUTH_WALL Solid {
+  translation 0 1.25 6
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.92 0.90 0.85
+        roughness 1.0
+        metalness 0.0
+      }
+      geometry Box {
+        size 14 2.5 0.2
+      }
     }
+  ]
+  name "south_wall"
+  boundingObject Box {
+    size 14 2.5 0.2
   }
 }
 
 # West wall  (x = -7)
-Wall {
-  translation -7 0 0
-  rotation 0 1 0 1.5708
-  name "west_wall"
-  size 12 2.5 0.2
-  appearance Roughcast {
-    textureTransform TextureTransform {
-      scale 8 2.5
+DEF WEST_WALL Solid {
+  translation -7 1.25 0
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.92 0.90 0.85
+        roughness 1.0
+        metalness 0.0
+      }
+      geometry Box {
+        size 0.2 2.5 12
+      }
     }
+  ]
+  name "west_wall"
+  boundingObject Box {
+    size 0.2 2.5 12
   }
 }
 
 # East wall  (x = +7)
-Wall {
-  translation 7 0 0
-  rotation 0 1 0 -1.5708
-  name "east_wall"
-  size 12 2.5 0.2
-  appearance Roughcast {
-    textureTransform TextureTransform {
-      scale 8 2.5
+DEF EAST_WALL Solid {
+  translation 7 1.25 0
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.92 0.90 0.85
+        roughness 1.0
+        metalness 0.0
+      }
+      geometry Box {
+        size 0.2 2.5 12
+      }
     }
+  ]
+  name "east_wall"
+  boundingObject Box {
+    size 0.2 2.5 12
   }
 }
 
 # ── Internal dividing wall with door opening ──────────────────────────────────
-# Segment north of door  (z ∈ [-6, -0.75])
-Wall {
-  translation 0 0 -3.375
-  rotation 0 1 0 1.5708
-  name "divider_north"
-  size 5.25 2.5 0.2
-  appearance Roughcast {
-    textureTransform TextureTransform {
-      scale 4 2.5
+# Segment north of door  (z in [-6, -0.75], length 5.25)
+DEF DIVIDER_NORTH Solid {
+  translation 0 1.25 -3.375
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.88 0.86 0.80
+        roughness 1.0
+        metalness 0.0
+      }
+      geometry Box {
+        size 0.2 2.5 5.25
+      }
     }
+  ]
+  name "divider_north"
+  boundingObject Box {
+    size 0.2 2.5 5.25
   }
 }
 
-# Door frame / opening at z ∈ [-0.75, +0.75]  (1.5 m wide)
-Door {
-  translation 0 0 0
-  rotation 0 1 0 1.5708
-  name "door_AB"
-  size 0.2 2.5 1.5
-  frameSize 0.05 0.05 0.05
+# Segment south of door  (z in [+0.75, +6], length 5.25)
+DEF DIVIDER_SOUTH Solid {
+  translation 0 1.25 3.375
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.88 0.86 0.80
+        roughness 1.0
+        metalness 0.0
+      }
+      geometry Box {
+        size 0.2 2.5 5.25
+      }
+    }
+  ]
+  name "divider_south"
+  boundingObject Box {
+    size 0.2 2.5 5.25
+  }
 }
 
-# Segment south of door  (z ∈ [+0.75, +6])
-Wall {
-  translation 0 0 3.375
-  rotation 0 1 0 1.5708
-  name "divider_south"
-  size 5.25 2.5 0.2
-  appearance Roughcast {
-    textureTransform TextureTransform {
-      scale 4 2.5
+# Lintel over the doorway  (z in [-0.75, +0.75], top portion only)
+DEF DIVIDER_LINTEL Solid {
+  translation 0 2.25 0
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.88 0.86 0.80
+        roughness 1.0
+        metalness 0.0
+      }
+      geometry Box {
+        size 0.2 0.5 1.5
+      }
     }
+  ]
+  name "divider_lintel"
+  boundingObject Box {
+    size 0.2 0.5 1.5
   }
 }
 
 # ── Obstacles – Room A (left, X < 0) ─────────────────────────────────────────
-CardboardBox {
-  translation -5 0 -3
+DEF BOX_A1 Solid {
+  translation -5 0.5 -3
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.72 0.55 0.32
+        roughness 0.9
+        metalness 0.0
+      }
+      geometry Box {
+        size 0.5 1.0 0.5
+      }
+    }
+  ]
   name "box_A1"
-  size 0.5 1.0 0.5
+  boundingObject Box {
+    size 0.5 1.0 0.5
+  }
 }
 
-CardboardBox {
-  translation -3 0 2
+DEF BOX_A2 Solid {
+  translation -3 0.4 2
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.72 0.55 0.32
+        roughness 0.9
+        metalness 0.0
+      }
+      geometry Box {
+        size 0.6 0.8 0.4
+      }
+    }
+  ]
   name "box_A2"
-  size 0.6 0.8 0.4
+  boundingObject Box {
+    size 0.6 0.8 0.4
+  }
 }
 
-CardboardBox {
-  translation -5.5 0 1
+DEF BOX_A3 Solid {
+  translation -5.5 0.3 1
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.72 0.55 0.32
+        roughness 0.9
+        metalness 0.0
+      }
+      geometry Box {
+        size 0.4 0.6 0.6
+      }
+    }
+  ]
   name "box_A3"
-  size 0.4 0.6 0.6
+  boundingObject Box {
+    size 0.4 0.6 0.6
+  }
 }
 
-Table {
-  translation -5.5 0 -5
+DEF TABLE_A1 Solid {
+  translation -5.5 0.37 -5
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.45 0.30 0.18
+        roughness 0.7
+        metalness 0.1
+      }
+      geometry Box {
+        size 1.8 0.74 0.9
+      }
+    }
+  ]
   name "table_A1"
-  size 1.8 0.74 0.9
+  boundingObject Box {
+    size 1.8 0.74 0.9
+  }
 }
 
-Table {
-  translation -1.5 0 -5
+DEF TABLE_A2 Solid {
+  translation -1.5 0.37 -5
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.45 0.30 0.18
+        roughness 0.7
+        metalness 0.1
+      }
+      geometry Box {
+        size 1.8 0.74 0.9
+      }
+    }
+  ]
   name "table_A2"
-  size 1.8 0.74 0.9
+  boundingObject Box {
+    size 1.8 0.74 0.9
+  }
 }
 
 # ── Obstacles – Room B (right, X > 0) ────────────────────────────────────────
-CardboardBox {
-  translation 4 0 -4
+DEF BOX_B1 Solid {
+  translation 4 0.5 -4
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.72 0.55 0.32
+        roughness 0.9
+        metalness 0.0
+      }
+      geometry Box {
+        size 0.5 1.0 0.5
+      }
+    }
+  ]
   name "box_B1"
-  size 0.5 1.0 0.5
+  boundingObject Box {
+    size 0.5 1.0 0.5
+  }
 }
 
-CardboardBox {
-  translation 2.5 0 1.5
+DEF BOX_B2 Solid {
+  translation 2.5 0.6 1.5
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.72 0.55 0.32
+        roughness 0.9
+        metalness 0.0
+      }
+      geometry Box {
+        size 0.6 1.2 0.6
+      }
+    }
+  ]
   name "box_B2"
-  size 0.6 1.2 0.6
+  boundingObject Box {
+    size 0.6 1.2 0.6
+  }
 }
 
-CardboardBox {
-  translation 5.5 0 3
+DEF BOX_B3 Solid {
+  translation 5.5 0.4 3
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.72 0.55 0.32
+        roughness 0.9
+        metalness 0.0
+      }
+      geometry Box {
+        size 0.4 0.8 0.4
+      }
+    }
+  ]
   name "box_B3"
-  size 0.4 0.8 0.4
+  boundingObject Box {
+    size 0.4 0.8 0.4
+  }
 }
 
-Table {
-  translation 5.5 0 -5
+DEF TABLE_B1 Solid {
+  translation 5.5 0.37 -5
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.45 0.30 0.18
+        roughness 0.7
+        metalness 0.1
+      }
+      geometry Box {
+        size 1.8 0.74 0.9
+      }
+    }
+  ]
   name "table_B1"
-  size 1.8 0.74 0.9
+  boundingObject Box {
+    size 1.8 0.74 0.9
+  }
 }
 
-Table {
-  translation 5.5 0 4.5
+DEF TABLE_B2 Solid {
+  translation 5.5 0.37 4.5
   rotation 0 1 0 1.5708
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.45 0.30 0.18
+        roughness 0.7
+        metalness 0.1
+      }
+      geometry Box {
+        size 1.8 0.74 0.9
+      }
+    }
+  ]
   name "table_B2"
-  size 1.8 0.74 0.9
+  boundingObject Box {
+    size 1.8 0.74 0.9
+  }
 }
 
 # ── CMEXAIII Robot ────────────────────────────────────────────────────────────
@@ -215,9 +428,9 @@ Table {
 # Translation Y = wheel_radius (0.05 m) so wheels sit on the floor.
 #
 # Webots frame mapping to ROS frame (handled by webots_ros2_driver):
-#   Webots -Z  ↔  ROS +X  (forward)
-#   Webots -X  ↔  ROS +Y  (left)
-#   Webots +Y  ↔  ROS +Z  (up)
+#   Webots -Z  <->  ROS +X  (forward)
+#   Webots -X  <->  ROS +Y  (left)
+#   Webots +Y  <->  ROS +Z  (up)
 #
 # Wheel positions (Webots frame, relative to robot origin):
 #   front_left  : X = -track/2 = -0.177,  Y = 0,  Z = -wheelbase/2 = -0.150
@@ -225,7 +438,7 @@ Table {
 #   rear_left   : X = -track/2 = -0.177,  Y = 0,  Z = +wheelbase/2 = +0.150
 #   rear_right  : X = +track/2 = +0.177,  Y = 0,  Z = +wheelbase/2 = +0.150
 #
-# All wheels: HingeJoint axis = (1, 0, 0); positive velocity → forward (-Z) motion.
+# All wheels: HingeJoint axis = (1, 0, 0); positive velocity -> forward (-Z) motion.
 # RotationalMotor names match URDF joint names consumed by mecanum_drive_controller.
 
 DEF CMEXAIII Robot {
@@ -240,7 +453,6 @@ DEF CMEXAIII Robot {
   children [
 
     # ── Chassis body ──────────────────────────────────────────────────────────
-    # Visual only; bounding object on the Robot node covers the chassis.
     DEF CHASSIS Solid {
       translation 0 0.525 0
       children [
@@ -269,11 +481,9 @@ DEF CMEXAIII Robot {
           name "front_left_wheel_joint"
           maxVelocity 15
           maxTorque 100
-          soundVolume 0
         }
         PositionSensor {
           name "front_left_wheel_joint_sensor"
-          period 0.032
         }
       ]
       endPoint DEF WHEEL_FL Solid {
@@ -314,11 +524,9 @@ DEF CMEXAIII Robot {
           name "front_right_wheel_joint"
           maxVelocity 15
           maxTorque 100
-          soundVolume 0
         }
         PositionSensor {
           name "front_right_wheel_joint_sensor"
-          period 0.032
         }
       ]
       endPoint DEF WHEEL_FR Solid {
@@ -359,11 +567,9 @@ DEF CMEXAIII Robot {
           name "rear_left_wheel_joint"
           maxVelocity 15
           maxTorque 100
-          soundVolume 0
         }
         PositionSensor {
           name "rear_left_wheel_joint_sensor"
-          period 0.032
         }
       ]
       endPoint DEF WHEEL_RL Solid {
@@ -404,11 +610,9 @@ DEF CMEXAIII Robot {
           name "rear_right_wheel_joint"
           maxVelocity 15
           maxTorque 100
-          soundVolume 0
         }
         PositionSensor {
           name "rear_right_wheel_joint_sensor"
-          period 0.032
         }
       ]
       endPoint DEF WHEEL_RR Solid {
@@ -439,7 +643,7 @@ DEF CMEXAIII Robot {
     }
 
     # ── Front-Left LiDAR ──────────────────────────────────────────────────────
-    # URDF position (ROS): (0.460, 0.257, 0.18) → Webots (-0.257, 0.18, -0.460)
+    # URDF position (ROS): (0.460, 0.257, 0.18) -> Webots (-0.257, 0.18, -0.460)
     # Topic: /scan_front_left  Frame: base_laser_front_left
     Lidar {
       translation -0.257 0.18 -0.460
@@ -449,12 +653,13 @@ DEF CMEXAIII Robot {
       fieldOfView 6.2832
       numberOfLayers 1
       near 0.05
+      minRange 0.1
       maxRange 8.0
       noise 0.01
     }
 
     # ── Rear-Right LiDAR ──────────────────────────────────────────────────────
-    # URDF position (ROS): (-0.460, -0.257, 0.18) → Webots (0.257, 0.18, 0.460)
+    # URDF position (ROS): (-0.460, -0.257, 0.18) -> Webots (0.257, 0.18, 0.460)
     # Topic: /scan_rear_right  Frame: base_laser_rear_right
     Lidar {
       translation 0.257 0.18 0.460
@@ -464,6 +669,7 @@ DEF CMEXAIII Robot {
       fieldOfView 6.2832
       numberOfLayers 1
       near 0.05
+      minRange 0.1
       maxRange 8.0
       noise 0.01
     }

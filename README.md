@@ -128,8 +128,7 @@ WebotsController (cmexaiii)  ─────────────────
 | Topic | Type | Description |
 |---|---|---|
 | `/base_mecanum_controller/reference` | `geometry_msgs/TwistStamped` | Velocity command input (Jazzy uses TwistStamped) |
-| `/base_mecanum_controller/cmd_vel` | `geometry_msgs/Twist` | Legacy Twist alias (also accepted) |
-| `/base_mecanum_controller/odom` | `nav_msgs/Odometry` | Odometry from wheel encoders |
+| `/base_mecanum_controller/odometry` | `nav_msgs/Odometry` | Odometry from wheel encoders |
 | `/scan_front_left` | `sensor_msgs/LaserScan` | Front-left LiDAR (360°, 8 m range) |
 | `/scan_rear_right` | `sensor_msgs/LaserScan` | Rear-right LiDAR (360°, 8 m range) |
 | `/joint_states` | `sensor_msgs/JointState` | All wheel joint states |
@@ -150,7 +149,9 @@ ros2 launch cmeresearch_simulation cmexaiii_webots_full.launch.py
 ```
 t = 0 s   Webots + robot_state_publisher + ros2_control (base sim)
 t = 6 s   dual_laser_merger  /scan_front_left + /scan_rear_right → /scan_combined
-t = 6 s   twist_mux          /cmd_vel → /base_mecanum_controller/cmd_vel
+t = 6 s   twist_mux          /cmd_vel + /teleop/cmd_vel + /mqtt/cmd_vel
+                             → /base_mecanum_controller/reference  (TwistStamped)
+t = 6 s   mqtt_bridge_node   MQTT cmeresearch/cmexa-001/mqtt/cmd_vel ↔ /mqtt/cmd_vel
 t = 6 s   state machine      sm_robot, nav_status, system_stats
 t = 12 s  SLAM Toolbox        online async mapping on /scan_combined
 t = 12 s  Nav2 bringup        planner + controller + recovery behaviours
@@ -161,12 +162,74 @@ t = 12 s  Nav2 bringup        planner + controller + recovery behaviours
 | Topic | Type | Description |
 |---|---|---|
 | `/scan_combined` | `sensor_msgs/LaserScan` | Merged 360° scan from both LiDARs |
-| `/cmd_vel` | `geometry_msgs/Twist` | Nav2 velocity output (goes into twist_mux) |
-| `/teleop/cmd_vel` | `geometry_msgs/Twist` | Manual teleop input (highest priority) |
+| `/cmd_vel` | `geometry_msgs/TwistStamped` | Nav2 velocity output (twist_mux input, priority 10) |
+| `/teleop/cmd_vel` | `geometry_msgs/TwistStamped` | Manual teleop input (twist_mux input, priority 100) |
+| `/mqtt/cmd_vel` | `geometry_msgs/TwistStamped` | MQTT-driven velocity (twist_mux input, priority 80) |
 | `/map` | `nav_msgs/OccupancyGrid` | SLAM live map |
 | `/robot_state` | `cmeresearch_msgs/RobotState` | State machine output |
 | `/nav_status` | `std_msgs/String` | Navigation goal status |
 | `/system_stats` | `std_msgs/String` | CPU / memory / temperature (JSON) |
+
+---
+
+### Driving the simulated robot from the web dashboard (MQTT)
+
+The full-stack launch starts an `mqtt_bridge_node` so the
+[`cmeresearch_amr_webcontrol`](https://github.com/cme-research/cmeresearch_amr_webcontrol)
+Django dashboard can drive the simulated robot through the same chain it uses
+for real hardware:
+
+```
+Browser → Django amr_control → Mosquitto broker → mqtt_bridge_node
+        → /mqtt/cmd_vel (TwistStamped)
+        → twist_mux  (priority 80)
+        → /base_mecanum_controller/reference
+        → MecanumDriveController → wheel motors
+```
+
+**Prerequisites**
+
+1. **Mosquitto broker** running on the same host:
+   ```bash
+   sudo apt install -y mosquitto mosquitto-clients
+   sudo systemctl enable --now mosquitto
+   ```
+2. The webapp's `app_config.json` `topics.movement` must match the bridge's
+   private path. Defaults are already aligned:
+   - bridge `private_path`: `cmeresearch/cmexa-001`
+   - webapp topic: `cmeresearch/cmexa-001/mqtt/cmd_vel`
+
+**Test the chain without the webapp**
+
+```bash
+# Start the full sim in one terminal
+ros2 launch cmeresearch_simulation cmexaiii_webots_full.launch.py
+
+# In another terminal, send a forward velocity via MQTT
+mosquitto_pub -h localhost -t 'cmeresearch/cmexa-001/mqtt/cmd_vel' \
+  -m '{"header":{"frame_id":"base_link","stamp":{"sec":0,"nanosec":0}},
+       "twist":{"linear":{"x":0.2,"y":0.0,"z":0.0},
+                "angular":{"x":0.0,"y":0.0,"z":0.0}}}'
+```
+
+The robot should start moving in Webots. Inspect the live ROS topic to confirm
+the bridge translated the MQTT payload:
+
+```bash
+ros2 topic echo /mqtt/cmd_vel
+```
+
+**Use the actual webapp**
+
+```bash
+cd ~/git/ros2_ws/src/cmeresearch_amr_webcontrol
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py runserver 0.0.0.0:8000
+```
+
+Open <http://localhost:8000>, click a movement button, and the simulated
+robot moves.
 
 ---
 
@@ -207,11 +270,13 @@ Two-room office layout (14 × 12 m total):
 ```
 
 - Outer walls, one internal dividing wall with a 1.5 m door opening
-- Scattered `CardboardBox` and `Table` objects as navigation obstacles
+- Scattered box and table obstacles for navigation
 - CMEXAIII robot spawned in Room A at (−4, 0, −2) facing north (−Z / ROS +X)
 
-The world file uses EXTERNPROTO URLs pinned to `R2025a` so it opens
-correctly without any local asset downloads beyond what Webots R2025a ships.
+The world is built entirely from Webots primitive nodes (`Solid` + `Box` +
+`PBRAppearance`), so it loads instantly without any EXTERNPROTO downloads —
+useful in containers, CI, and offline machines where the Cyberbotics PROTO
+CDN may be unreachable.
 
 ---
 
