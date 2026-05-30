@@ -32,6 +32,12 @@
   <exec_depend>cmeresearch_robot_state</exec_depend>
   <exec_depend>cmeresearch_bringup</exec_depend>
 
+  <!-- Webapp end-to-end test stack -->
+  <exec_depend>mqtt_bridge</exec_depend>
+  <exec_depend>cmeresearch_msgs</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>rclpy</exec_depend>
+
   <!-- Launch infrastructure -->
   <exec_depend>xacro</exec_depend>
   <exec_depend>launch_ros</exec_depend>

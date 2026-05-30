@@ -23,3 +23,11 @@ repositories:
     type: git
     url: https://github.com/cme-research/dual_laser_merger.git
     version: jazzy_dev
+
+  # Needed for the end-to-end webapp test stack: the mqtt_bridge_node in
+  # cmexaiii_nav_stack.launch.py bridges ROS↔MQTT between the sim and the
+  # webapp container (started via the docker-compose `webapp` profile).
+  src/mqtt_bridge:
+    type: git
+    url: https://github.com/cme-research/mqtt_bridge.git
+    version: jazzy

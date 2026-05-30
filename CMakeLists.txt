@@ -14,6 +14,7 @@ endif()
 install(PROGRAMS
   scripts/correct_odometry_msg.py
   scripts/correct_odometry_msg
+  scripts/joint_states_to_wheel_feedback.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
