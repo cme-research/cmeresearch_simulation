@@ -8,7 +8,7 @@ Run inside the simulation Docker container after launching the base sim
      and ``/base_mecanum_controller/odometry`` (mecanum controller spawned
      and Webots ticking) to deliver at least 5 messages each.
   2. Publishes ``TwistStamped(linear.x=0.3)`` on
-     ``/base_mecanum_controller/reference`` for 3 seconds.
+     ``/base_mecanum_controller/cmd_vel`` for 3 seconds.
   3. Verifies the odometry pose moved at least 5 cm.
 
 Exit code 0 = pass, 1 = fail. Used by the headless-smoke-test CI job.
@@ -39,7 +39,7 @@ class SmokeTest(Node):
             Odometry, '/base_mecanum_controller/odometry', self._on_odom, 10,
         )
         self.cmd_pub = self.create_publisher(
-            TwistStamped, '/base_mecanum_controller/reference', 10,
+            TwistStamped, '/base_mecanum_controller/cmd_vel', 10,
         )
 
     def _on_js(self, msg):
@@ -108,7 +108,7 @@ def main():
                 f'controller did not drive the robot'
             )
             return 1
-        node.get_logger().info('PASS — sim is alive, mecanum chain accepts /reference')
+        node.get_logger().info('PASS — sim is alive, mecanum chain accepts /cmd_vel')
         return 0
     finally:
         node.destroy_node()

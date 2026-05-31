@@ -99,10 +99,21 @@ def generate_launch_description():
         arguments=['joint_state_broadcaster', '--controller-manager-timeout', '60'],
     )
 
+    # Remap the controller's input topic from `~/reference` to `~/cmd_vel` so
+    # twist_mux's output (cmd_vel_out → /base_mecanum_controller/cmd_vel in the
+    # nav_stack launch) reaches the controller. Mirrors what
+    # cmeresearch_bringup/launch/cmexaiii_hardware.launch.py does on the real
+    # robot — without it the webapp → mqtt → twist_mux chain dead-ends on a
+    # topic name mismatch.
     mecanum_controller_spawner = Node(
         package='controller_manager',
         executable='spawner',
-        arguments=['base_mecanum_controller', '--controller-manager-timeout', '60'],
+        arguments=[
+            'base_mecanum_controller',
+            '--controller-manager-timeout', '60',
+            '--controller-ros-args',
+            '-r /base_mecanum_controller/reference:=/base_mecanum_controller/cmd_vel',
+        ],
     )
 
     delayed_spawners = TimerAction(
