@@ -1,18 +1,24 @@
 repositories:
+  # Pin cmeresearch_msgs / _robot_state / _bringup to jazzy_dev so the sim
+  # picks up the active dev tip of the message + node + bridge surface
+  # together (e.g. cmeresearch_msgs/SystemStats and the system_stats_node
+  # that depends on it). The dual_laser_merger, cmeresearch_description and
+  # mqtt_bridge repos stay on jazzy because the sim doesn't need their
+  # dev-line changes and jazzy is the stable line we ship.
   src/cmeresearch_msgs:
     type: git
     url: https://github.com/cme-research/cmeresearch_msgs.git
-    version: main
+    version: jazzy_dev
 
   src/cmeresearch_description:
     type: git
     url: https://github.com/cme-research/cmeresearch_description.git
-    version: main
+    version: jazzy
 
   src/cmeresearch_bringup:
     type: git
     url: https://github.com/cme-research/cmeresearch_bringup.git
-    version: main
+    version: jazzy_dev
 
   src/cmeresearch_robot_state:
     type: git
@@ -22,7 +28,7 @@ repositories:
   src/dual_laser_merger:
     type: git
     url: https://github.com/cme-research/dual_laser_merger.git
-    version: jazzy_dev
+    version: jazzy
 
   # Needed for the end-to-end webapp test stack: the mqtt_bridge_node in
   # cmexaiii_nav_stack.launch.py bridges ROS↔MQTT between the sim and the

@@ -79,14 +79,29 @@ RUN mkdir -p src \
 COPY src/cmeresearch_simulation src/cmeresearch_simulation
 
 # ── ROS dependencies ───────────────────────────────────────────────────────────
+# `apt-get update` is required here even though the system-packages stage above
+# also ran one — the previous stage ends with `rm -rf /var/lib/apt/lists/*` so
+# the apt index is empty when rosdep install reaches for transitive deps
+# (rviz2, twist_mux, …). Without this, apt-get install -y fails with
+# "Unable to locate package ros-jazzy-rviz2" in clean CI builds.
+#
+# PIP_BREAK_SYSTEM_PACKAGES=1 — Ubuntu 24.04 (noble) ships Python 3.12 which
+# enforces PEP 668 (externally-managed-environment). Some transitive rosdep
+# pip keys (e.g. pulled by dual_laser_merger / cmeresearch_robot_state) need
+# this to install into the system Python without --break-system-packages on
+# each invocation. See:
+# http://docs.ros.org/en/independent/api/rosdep/html/pip_and_pep_668.html
+ENV PIP_BREAK_SYSTEM_PACKAGES=1
 RUN source /opt/ros/jazzy/setup.bash \
+ && apt-get update \
  && rosdep update \
  && rosdep install \
       --from-paths src \
       --ignore-src \
       --rosdistro jazzy \
       -y \
-      --skip-keys "webots_ros2_driver webots_ros2_control"
+      --skip-keys "webots_ros2_driver webots_ros2_control pytest" \
+ && rm -rf /var/lib/apt/lists/*
 
 # ── Build ──────────────────────────────────────────────────────────────────────
 RUN source /opt/ros/jazzy/setup.bash \
