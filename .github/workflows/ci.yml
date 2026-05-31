@@ -1,0 +1,186 @@
+name: CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [jazzy, jazzy_dev]
+  pull_request:
+    branches: [jazzy, jazzy_dev]
+
+env:
+  REGISTRY: ghcr.io
+  ORG: cme-research
+  IMAGE: cmeresearch_simulation
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────────────
+  # Job 1 — colcon build + ament lint, fast static gate. Catches Python /
+  # launch / package.xml drift via ros-tooling/action-ros-ci, same shape as
+  # the other cme-research ROS packages.
+  # ─────────────────────────────────────────────────────────────────────────
+  build-and-lint:
+    name: Build and lint
+    runs-on: ubuntu-latest
+    container:
+      image: ros:jazzy-ros-base
+    steps:
+      - uses: ros-tooling/setup-ros@v0.7
+      - uses: ros-tooling/action-ros-ci@v0.3
+        with:
+          target-ros2-distro: jazzy
+          skip-tests: false
+          rosdep-check: false
+          package-name: cmeresearch_simulation
+          vcs-repo-file-url: https://raw.githubusercontent.com/cme-research/cmeresearch_simulation/${{ github.head_ref || github.ref_name }}/docker/simulation.repos
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Job 2 — Docker image build (no push). Validates that the Webots + Nav2
+  # + vcs-import + colcon stack assembles in the container. Writes the gha
+  # cache that the smoke jobs reuse.
+  # ─────────────────────────────────────────────────────────────────────────
+  docker-build:
+    name: Docker image build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout into workspace layout
+        uses: actions/checkout@v4
+        with:
+          path: src/cmeresearch_simulation
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build image (amd64, no push, gha cache)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: src/cmeresearch_simulation/docker/Dockerfile
+          platforms: linux/amd64
+          push: false
+          load: true
+          tags: cmeresearch/simulation:ci
+          cache-from: type=gha,scope=simulation
+          cache-to: type=gha,mode=max,scope=simulation
+
+      - name: Export image for downstream jobs
+        run: docker save cmeresearch/simulation:ci -o /tmp/simulation-ci.tar
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: simulation-ci-image
+          path: /tmp/simulation-ci.tar
+          retention-days: 1
+          compression-level: 0
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Job 3 — Headless smoke test. Runs cmexaiii_webots.launch.py with
+  # gui:=false, waits for /joint_states and /base_mecanum_controller/odometry,
+  # publishes a /reference TwistStamped, asserts the robot moved.
+  # ─────────────────────────────────────────────────────────────────────────
+  headless-smoke-test:
+    name: Headless sim smoke test
+    needs: docker-build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: simulation-ci-image
+          path: /tmp
+
+      - name: Load image
+        run: docker load -i /tmp/simulation-ci.tar
+
+      - name: Start headless simulation
+        run: |
+          docker run -d --name sim \
+            --network host \
+            --ipc host \
+            -e DISPLAY= \
+            -e ROS_DOMAIN_ID=0 \
+            -v "${{ github.workspace }}/test:/smoke:ro" \
+            cmeresearch/simulation:ci \
+            ros2 launch cmeresearch_simulation cmexaiii_webots.launch.py gui:=false
+
+      - name: Wait for controller, drive and verify odometry
+        run: |
+          docker exec sim bash -lc '
+            source /opt/ros/jazzy/setup.bash
+            source /ros2_ws/install/setup.bash
+            python3 /smoke/headless_smoke_test.py
+          '
+
+      - name: Dump simulation logs on failure
+        if: failure()
+        run: |
+          echo "::group::sim container logs"
+          docker logs sim || true
+          echo "::endgroup::"
+
+      - name: Tear down
+        if: always()
+        run: docker rm -f sim || true
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Job 4 — Webapp end-to-end smoke. Brings up the full
+  # `docker compose --profile webapp` stack (mosquitto + webapp + webots_sim
+  # + nav_stack) and verifies a ROS→MQTT odometry message lands on the
+  # broker, proving the full chain webots → mecanum controller →
+  # mqtt_bridge → broker is functional.
+  # ─────────────────────────────────────────────────────────────────────────
+  webapp-e2e-smoke:
+    name: Webapp end-to-end smoke
+    needs: docker-build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout into workspace layout
+        uses: actions/checkout@v4
+        with:
+          path: src/cmeresearch_simulation
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: simulation-ci-image
+          path: /tmp
+
+      - name: Load image
+        run: |
+          docker load -i /tmp/simulation-ci.tar
+          docker tag cmeresearch/simulation:ci cmeresearch/simulation:latest
+
+      - name: Install mosquitto client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends mosquitto-clients
+
+      - name: Start webapp profile (headless)
+        working-directory: src/cmeresearch_simulation/docker
+        env:
+          WEBOTS_GUI: 'false'
+          NAV_STARTUP_DELAY: '10.0'
+        run: |
+          docker compose --profile webapp up -d
+          docker compose ps
+
+      - name: Run end-to-end MQTT smoke check
+        run: bash src/cmeresearch_simulation/test/webapp_e2e_smoke.sh
+
+      - name: Dump compose logs on failure
+        if: failure()
+        working-directory: src/cmeresearch_simulation/docker
+        run: |
+          echo "::group::compose ps"
+          docker compose ps -a || true
+          echo "::endgroup::"
+          for svc in mosquitto webots_sim nav_stack webapp; do
+            echo "::group::${svc} logs"
+            docker compose logs --tail=200 "${svc}" || true
+            echo "::endgroup::"
+          done
+
+      - name: Tear down
+        if: always()
+        working-directory: src/cmeresearch_simulation/docker
+        run: docker compose --profile webapp down -v || true
