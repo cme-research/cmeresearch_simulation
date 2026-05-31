@@ -1,0 +1,48 @@
+mqtt_bridge_node:
+  ros__parameters:
+    mqtt:
+      client:
+        protocol: 4      # MQTTv311
+      connection:
+        host: "localhost"
+        port: 1883
+        keepalive: 60
+      private_path: "cmeresearch/cmexaiii-001"
+    serializer: json:dumps
+    deserializer: json:loads
+    # Layout mirrors cmeresearch_bringup/config/cmexaiii/mqtt_bridge_params.yaml
+    # so the webapp sees the same topic surface in sim as on the real robot.
+    # Extra MqttToRosBridge for /mqtt/cmd_vel because in sim the webapp drives
+    # the simulated robot directly (no real joystick); prod uses /robot_cmd
+    # high-level commands and bridges /base_mecanum_controller/cmd_vel outward
+    # purely for observability.
+    n_bridges: 13
+    bridge:
+      # --- Commands ---
+      # Webapp publishes JSON-encoded TwistStamped to
+      #   cmeresearch/cmexaiii-001/mqtt/cmd_vel
+      # Bridge re-publishes it on ROS /mqtt/cmd_vel; twist_mux picks it up.
+      bridge1: ["mqtt_bridge.bridge:MqttToRosBridge","geometry_msgs.msg:TwistStamped","~/mqtt/cmd_vel","/mqtt/cmd_vel"]
+      bridge2: ["mqtt_bridge.bridge:MqttToRosBridge","std_msgs.msg:String","~/robot_cmd","/robot_cmd"]
+      # --- Odometry & Pose ---
+      bridge3: ["mqtt_bridge.bridge:RosToMqttBridge","nav_msgs.msg:Odometry","/base_mecanum_controller/odometry","~/base/odometry"]
+      bridge4: ["mqtt_bridge.bridge:RosToMqttBridge","geometry_msgs.msg:PoseWithCovarianceStamped","/amcl_pose","~/base/pose"]
+      # --- State machine ---
+      bridge5: ["mqtt_bridge.bridge:RosToMqttBridge","cmeresearch_msgs.msg:RobotState","/robot_state","~/robot_state"]
+      # --- Navigation status ---
+      bridge6: ["mqtt_bridge.bridge:RosToMqttBridge","std_msgs.msg:String","/nav_status","~/navigation/status"]
+      # --- Motor feedback (per wheel) ---
+      # Synthesised from /joint_states by joint_states_to_wheel_feedback.py
+      # since Webots has no Tinkerforge bricklets. JSON layout matches the
+      # real TinkerStepperFeedback msg (current_velocity in rad/s + fillers).
+      bridge7: ["mqtt_bridge.bridge:RosToMqttBridge","cmeresearch_msgs.msg:TinkerStepperFeedback","/cmexaiii/front_left/feedback","~/base/front_left/feedback"]
+      bridge8: ["mqtt_bridge.bridge:RosToMqttBridge","cmeresearch_msgs.msg:TinkerStepperFeedback","/cmexaiii/front_right/feedback","~/base/front_right/feedback"]
+      bridge9: ["mqtt_bridge.bridge:RosToMqttBridge","cmeresearch_msgs.msg:TinkerStepperFeedback","/cmexaiii/rear_left/feedback","~/base/rear_left/feedback"]
+      bridge10: ["mqtt_bridge.bridge:RosToMqttBridge","cmeresearch_msgs.msg:TinkerStepperFeedback","/cmexaiii/rear_right/feedback","~/base/rear_right/feedback"]
+      # --- System diagnostics ---
+      bridge11: ["mqtt_bridge.bridge:RosToMqttBridge","diagnostic_msgs.msg:DiagnosticArray","/diagnostics","~/diagnostics"]
+      # --- System stats (CPU / memory / temperature) ---
+      bridge12: ["mqtt_bridge.bridge:RosToMqttBridge","std_msgs.msg:String","/system_stats","~/system/stats"]
+      # --- Observability: also publish the actual cmd_vel reaching the
+      #     controller, so the webapp can plot what the robot is really doing.
+      bridge13: ["mqtt_bridge.bridge:RosToMqttBridge","geometry_msgs.msg:TwistStamped","/base_mecanum_controller/cmd_vel","~/base/cmd_vel"]

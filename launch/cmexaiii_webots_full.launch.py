@@ -104,8 +104,12 @@ def generate_launch_description():
     )
 
     # ── 3. twist_mux ─────────────────────────────────────────────────────────
-    # Subscribes to /cmd_vel (Nav2, priority 10) and /teleop/cmd_vel (priority 100).
-    # Output remapped to /base_mecanum_controller/cmd_vel.
+    # Subscribes (TwistStamped) to:
+    #   /cmd_vel        (Nav2,    priority 10)
+    #   /teleop/cmd_vel (joystick, priority 100)
+    #   /mqtt/cmd_vel   (MQTT,    priority 80)
+    # Output remapped to /base_mecanum_controller/reference, which is what the
+    # ros2_control MecanumDriveController actually subscribes to.
     twist_mux = TimerAction(
         period=6.0,
         actions=[
@@ -114,9 +118,19 @@ def generate_launch_description():
                 executable='twist_mux',
                 name='twist_mux',
                 output='screen',
-                remappings=[('cmd_vel_out', '/base_mecanum_controller/cmd_vel')],
+                remappings=[('cmd_vel_out', '/base_mecanum_controller/reference')],
                 parameters=[
                     os.path.join(sim_share, 'config', 'cmexaiii', 'twist_mux_sim.yaml'),
+                    {'use_sim_time': True},
+                ],
+            ),
+            Node(
+                package='mqtt_bridge',
+                executable='mqtt_bridge_node',
+                name='mqtt_bridge_node',
+                output='screen',
+                parameters=[
+                    os.path.join(sim_share, 'config', 'cmexaiii', 'mqtt_bridge_sim_params.yaml'),
                     {'use_sim_time': True},
                 ],
             ),

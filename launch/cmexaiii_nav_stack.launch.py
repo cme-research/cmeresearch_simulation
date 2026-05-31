@@ -8,6 +8,8 @@ Starts (with configurable initial delay):
   t + delay +  0 s   dual_laser_merger   /scan_* → /scan_combined
   t + delay +  0 s   twist_mux           /cmd_vel + /teleop/cmd_vel → controller
   t + delay +  0 s   state machine       sm_robot, nav_status, system_stats
+  t + delay +  0 s   mqtt_bridge         ROS ↔ MQTT (private_path cmexaiii-001)
+  t + delay +  0 s   wheel_feedback      /joint_states → /cmexaiii/<wheel>/feedback
   t + delay +  6 s   SLAM Toolbox        online async on /scan_combined
   t + delay +  6 s   Nav2 bringup
 """
@@ -119,6 +121,36 @@ def generate_launch_description():
         ],
     )
 
+    # ── MQTT bridge + wheel-feedback adapter ──────────────────────────────────
+    # mqtt_bridge connects to the local mosquitto broker (started by the
+    # `webapp` docker-compose profile) and exposes the same topic surface the
+    # real robot exports. wheel_feedback synthesises per-wheel
+    # TinkerStepperFeedback from /joint_states because Webots has no
+    # Tinkerforge bricklets — the production stepper-driver nodes publish
+    # those topics on hardware.
+    mqtt_chain = TimerAction(
+        period=delay,
+        actions=[
+            Node(
+                package='mqtt_bridge',
+                executable='mqtt_bridge_node',
+                name='mqtt_bridge_node',
+                output='screen',
+                parameters=[
+                    os.path.join(sim_share, 'config', 'cmexaiii', 'mqtt_bridge_sim_params.yaml'),
+                    {'use_sim_time': True},
+                ],
+            ),
+            Node(
+                package='cmeresearch_simulation',
+                executable='joint_states_to_wheel_feedback.py',
+                name='joint_states_to_wheel_feedback',
+                output='screen',
+                parameters=[{'use_sim_time': True}],
+            ),
+        ],
+    )
+
     # ── SLAM Toolbox ──────────────────────────────────────────────────────────
     slam_toolbox = TimerAction(
         period=float(6.0),  # extra 6 s on top of startup_delay handled below
@@ -167,5 +199,6 @@ def generate_launch_description():
         laser_merger,
         twist_mux,
         state_machine,
+        mqtt_chain,
         slam_and_nav,
     ])

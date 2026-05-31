@@ -7,13 +7,20 @@
 # Profiles
 # --------
 #   base          Webots + robot driver + ros2_control only
-#   full          base + SLAM + Nav2 + state machine (default)
+#   full          base + SLAM + Nav2 + state machine + mqtt_bridge
+#   webapp        full + local mosquitto broker + production webapp container
 #   rviz          adds an RViz2 window (requires display)
 #
 # Quick start (full stack, with GUI):
 #   xhost +local:docker
 #   docker compose -f src/cmeresearch_simulation/docker/docker-compose.yml \
 #     --profile full up
+#
+# End-to-end webapp test (controller → mqtt_bridge → broker → webapp → broker → bridge → ROS):
+#   xhost +local:docker
+#   docker compose -f src/cmeresearch_simulation/docker/docker-compose.yml \
+#     --profile webapp up
+#   Open http://localhost:8000 to drive the simulated robot from the webapp.
 #
 # Headless (no display – Xvfb auto-started inside containers):
 #   docker compose -f src/cmeresearch_simulation/docker/docker-compose.yml \
@@ -39,10 +46,46 @@ x-ros-common: &ros-common
 
 services:
 
+  # ── Local MQTT broker ────────────────────────────────────────────────────
+  # Mirrors the prod-deploy broker so the webapp + mqtt_bridge chain can be
+  # exercised end-to-end without the real robot. No remote-bridge connection;
+  # everything stays on localhost.
+  mosquitto:
+    image: eclipse-mosquitto:latest
+    container_name: cmexaiii_sim_mosquitto
+    profiles: [webapp]
+    network_mode: host
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+    healthcheck:
+      # Probe via the container's own non-loopback IP so a misconfigured
+      # loopback-only listener fails the check (same approach as cmexa_install
+      # production compose).
+      test: ["CMD-SHELL", "mosquitto_sub -h \"$$(hostname -i | awk '{print $$1}')\" -t '$$SYS/#' -C 1 -i healthcheck -W 3 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    restart: on-failure
+
+  # ── Webapp (same image used in production) ───────────────────────────────
+  # Connects to localhost:1883 (host network) and to the topics in its
+  # baked-in app_config.json (cmeresearch/cmexaiii-001/...). The sim's
+  # mqtt_bridge_sim_params.yaml uses the matching namespace so topics line up.
+  webapp:
+    image: ghcr.io/cme-research/cmeresearch_amr_webcontrol:${WEBAPP_VERSION:-jazzy-latest}
+    container_name: cmexaiii_sim_webapp
+    profiles: [webapp]
+    network_mode: host
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+    restart: on-failure
+
   # ── Base simulation (Webots + ros2_control) ──────────────────────────────
   webots_sim:
     <<: *ros-common
-    profiles: [base, full]
+    profiles: [base, full, webapp]
     container_name: cmexaiii_webots
     command: >
       ros2 launch cmeresearch_simulation cmexaiii_webots.launch.py
@@ -50,10 +93,11 @@ services:
         use_sim_time:=true
     restart: on-failure
 
-  # ── Navigation stack (laser merger + twist_mux + SLAM + Nav2 + state machine)
+  # ── Navigation stack (laser merger + twist_mux + SLAM + Nav2 + state machine
+  #     + mqtt_bridge + joint_states→wheel_feedback adapter) ───────────────
   nav_stack:
     <<: *ros-common
-    profiles: [full]
+    profiles: [full, webapp]
     container_name: cmexaiii_nav_stack
     # startup_delay gives Webots time to publish TF and laser topics before
     # the nav stack tries to subscribe.
