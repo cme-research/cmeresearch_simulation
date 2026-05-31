@@ -86,7 +86,7 @@ RUN source /opt/ros/jazzy/setup.bash \
       --ignore-src \
       --rosdistro jazzy \
       -y \
-      --skip-keys "webots_ros2_driver webots_ros2_control"
+      --skip-keys "webots_ros2_driver webots_ros2_control pytest"
 
 # ── Build ──────────────────────────────────────────────────────────────────────
 RUN source /opt/ros/jazzy/setup.bash \
