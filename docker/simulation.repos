@@ -2,17 +2,17 @@ repositories:
   src/cmeresearch_msgs:
     type: git
     url: https://github.com/cme-research/cmeresearch_msgs.git
-    version: main
+    version: jazzy
 
   src/cmeresearch_description:
     type: git
     url: https://github.com/cme-research/cmeresearch_description.git
-    version: main
+    version: jazzy
 
   src/cmeresearch_bringup:
     type: git
     url: https://github.com/cme-research/cmeresearch_bringup.git
-    version: main
+    version: jazzy
 
   src/cmeresearch_robot_state:
     type: git
@@ -22,7 +22,7 @@ repositories:
   src/dual_laser_merger:
     type: git
     url: https://github.com/cme-research/dual_laser_merger.git
-    version: jazzy_dev
+    version: jazzy
 
   # Needed for the end-to-end webapp test stack: the mqtt_bridge_node in
   # cmexaiii_nav_stack.launch.py bridges ROS↔MQTT between the sim and the
