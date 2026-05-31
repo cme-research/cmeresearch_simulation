@@ -79,14 +79,21 @@ RUN mkdir -p src \
 COPY src/cmeresearch_simulation src/cmeresearch_simulation
 
 # ── ROS dependencies ───────────────────────────────────────────────────────────
+# `apt-get update` is required here even though the system-packages stage above
+# also ran one — the previous stage ends with `rm -rf /var/lib/apt/lists/*` so
+# the apt index is empty when rosdep install reaches for transitive deps
+# (rviz2, twist_mux, …). Without this, apt-get install -y fails with
+# "Unable to locate package ros-jazzy-rviz2" in clean CI builds.
 RUN source /opt/ros/jazzy/setup.bash \
+ && apt-get update \
  && rosdep update \
  && rosdep install \
       --from-paths src \
       --ignore-src \
       --rosdistro jazzy \
       -y \
-      --skip-keys "webots_ros2_driver webots_ros2_control pytest"
+      --skip-keys "webots_ros2_driver webots_ros2_control pytest" \
+ && rm -rf /var/lib/apt/lists/*
 
 # ── Build ──────────────────────────────────────────────────────────────────────
 RUN source /opt/ros/jazzy/setup.bash \
