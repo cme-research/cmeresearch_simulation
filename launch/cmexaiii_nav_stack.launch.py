@@ -102,7 +102,13 @@ def generate_launch_description():
                 executable='sm_robot_node',
                 name='sm_robot',
                 output='screen',
-                parameters=[{'use_sim_time': True}],
+                # See cmexaiii_webots_full.launch.py: Webots has no
+                # tinkerforge stepper state topics, so we let the readiness
+                # gate fall through after 1 s instead of the 30 s default.
+                parameters=[{
+                    'use_sim_time': True,
+                    'init_timeout_sec': 1.0,
+                }],
             ),
             Node(
                 package='cmeresearch_robot_state',

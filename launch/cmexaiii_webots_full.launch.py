@@ -146,7 +146,19 @@ def generate_launch_description():
                 executable='sm_robot_node',
                 name='sm_robot',
                 output='screen',
-                parameters=[{'use_sim_time': True}],
+                # Webots has no tinkerforge bricklets, so the package-default
+                # driver_topics (4 × /cmexa_base/<wheel>/state) never publish
+                # and sm_robot would block in Initializing for the full
+                # init_timeout_sec (default 30 s) on every sim launch — the
+                # webapp shows "Initializing…" for that whole window. Shorten
+                # the timeout to 1 s so the SM falls through to Idle almost
+                # immediately. We can't simply pass `driver_topics: []` here
+                # because launch_ros rejects empty parameter arrays
+                # ("Expected value to be float/int/str/bool/bytes, got ()").
+                parameters=[{
+                    'use_sim_time': True,
+                    'init_timeout_sec': 1.0,
+                }],
             ),
             Node(
                 package='cmeresearch_robot_state',
