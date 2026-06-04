@@ -102,12 +102,12 @@ def generate_launch_description():
                 executable='sm_robot_node',
                 name='sm_robot',
                 output='screen',
-                # See cmexaiii_webots_full.launch.py for why driver_topics
-                # is emptied in sim — Webots has no tinkerforge stepper
-                # state topics to wait for.
+                # See cmexaiii_webots_full.launch.py: Webots has no
+                # tinkerforge stepper state topics, so we let the readiness
+                # gate fall through after 1 s instead of the 30 s default.
                 parameters=[{
                     'use_sim_time': True,
-                    'driver_topics': [],
+                    'init_timeout_sec': 1.0,
                 }],
             ),
             Node(
