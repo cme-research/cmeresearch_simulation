@@ -146,7 +146,16 @@ def generate_launch_description():
                 executable='sm_robot_node',
                 name='sm_robot',
                 output='screen',
-                parameters=[{'use_sim_time': True}],
+                # Empty driver_topics disables the stepper-readiness gate.
+                # Webots has no tinkerforge bricklets, so the package default
+                # (4 × /cmexa_base/<wheel>/state) never publishes and sm_robot
+                # would block in Initializing for the full init_timeout_sec
+                # (30 s) on every sim launch. The webapp shows "Initializing…"
+                # for that whole window — empty list → immediate Idle.
+                parameters=[{
+                    'use_sim_time': True,
+                    'driver_topics': [],
+                }],
             ),
             Node(
                 package='cmeresearch_robot_state',

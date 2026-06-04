@@ -102,7 +102,13 @@ def generate_launch_description():
                 executable='sm_robot_node',
                 name='sm_robot',
                 output='screen',
-                parameters=[{'use_sim_time': True}],
+                # See cmexaiii_webots_full.launch.py for why driver_topics
+                # is emptied in sim — Webots has no tinkerforge stepper
+                # state topics to wait for.
+                parameters=[{
+                    'use_sim_time': True,
+                    'driver_topics': [],
+                }],
             ),
             Node(
                 package='cmeresearch_robot_state',
